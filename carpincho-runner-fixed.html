@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carpincho Runner Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 20px;
+            transition: background 1s ease;
+        }
+
+        body.night-mode {
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+        }
+
+        .game-wrapper {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+        }
+
+        .stat-item {
+            text-align: center;
+            color: white;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .mode-toggle {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .mode-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        /* Modificado: hacer que el "canvas" (#game-container) ocupe toda la pantalla */
+        #game-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(180deg, #87CEEB 0%, #98D8C8 50%, #90EE90 100%);
+            border-radius: 0;
+            box-shadow: none;
+            border: none;
+            transition: background 1s ease;
+            z-index: 1;
+        }
+        
+        /* Mantener variante night coherente con el cambio */
+        #game-container.night {
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+
+        .ground {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: rgba(34, 139, 34, 0.3);
+            border-top: 3px solid rgba(34, 139, 34, 0.5);
+        }
+
+        #player {
+            position: absolute;
+            bottom: 50px;
+            left: 80px;
+            width: 70px;
+            height: 60px;
+            z-index: 5;
+            transition: transform 0.1s;
+        }
+
+        #player.jumping {
+            transform: rotate(-10deg) translateY(-5px);
+        }
+
+        .carpincho {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        .carpincho img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .obstacle {
+            position: absolute;
+            bottom: 50px;
+            width: 65px;
+            height: 50px;
+            z-index: 4;
+        }
+
+        .cactus {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
+        }
+
+        .cactus img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .powerup {
+            position: absolute;
+            bottom: 150px;
+            width: 35px;
+            height: 35px;
+            z-index: 4;
+            animation: float 2s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .powerup-shield {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 0 20px rgba(79, 172, 254, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .powerup-shield::before {
+            content: '🛡️';
+        }
+
+        .powerup-coin {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 0 20px rgba(245, 87, 108, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .powerup-coin::before {
+            content: '⭐';
+        }
+
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .shield-active {
+            box-shadow: 0 0 30px rgba(79, 172, 254, 0.8);
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            z-index: 100;
+            min-width: 400px;
+        }
+
+        #game-over h2 {
+            color: #e74c3c;
+            margin-bottom: 20px;
+            font-size: 36px;
+        }
+
+        .final-stats {
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .final-stat {
+            text-align: center;
+        }
+
+        .final-stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .final-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        #leaderboard {
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        #leaderboard h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(0,0,0,0.05);
+            border-radius: 5px;
+        }
+
+        .leaderboard-entry.highlight {
+            background: rgba(231, 76, 60, 0.2);
+            font-weight: 700;
+        }
+
+        #restart-btn {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        #restart-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .instructions {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .biome-indicator {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 14px;
+            background: rgba(0,0,0,0.3);
+            padding: 8px 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+
+        @media (max-width: 768px) {
+            #game-container {
+                height: 300px;
+            }
+            #game-over {
+                min-width: 90%;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="header">
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-label">Puntos</div>
+                    <div class="stat-value" id="score">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Monedas</div>
+                    <div class="stat-value" id="coins">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Mejor</div>
+                    <div class="stat-value" id="high-score">0</div>
+                </div>
+            </div>
+            <button class="mode-toggle" id="mode-toggle">🌙 Modo Noche corrientes</button>
+        </div>
+
+        <div id="game-container">
+            <div class="biome-indicator" id="biome">🌅 Día - corrientes</div>
+            <div id="player">
+                <div class="carpincho">
+                    <img id="player-img" src="" alt="Carpincho">
+                </div>
+            </div>
+            <div class="ground"></div>
+            
+            <div id="game-over">
+                <h2>¡Juego Terminado!</h2>
+                <div class="final-stats">
+                    <div class="final-stat">
+                        <div class="final-stat-label">Puntos</div>
+                        <div class="final-stat-value" id="final-score">0</div>
+                    </div>
+                    <div class="final-stat">
+                        <div class="final-stat-label">Monedas</div>
+                        <div class="final-stat-value" id="final-coins">0</div>
+                    </div>
+                    <div class="final-stat">
+                        <div class="final-stat-label">Tiempo</div>
+                        <div class="final-stat-value" id="final-time">0s</div>
+                    </div>
+                </div>
+                <div id="leaderboard">
+                    <h3>🏆 Top 5 Mejores Puntajes</h3>
+                    <div id="leaderboard-list"></div>
+                </div>
+                <button id="restart-btn">Jugar de nuevo</button>
+            </div>
+        </div>
+
+        <div class="instructions">
+            Presiona ESPACIO o toca la pantalla para saltar | Recolecta ⭐ y 🛡️
+        </div>
+    </div>
+
+    <script>
+        const player = document.getElementById('player');
+        const gameContainer = document.getElementById('game-container');
+        const scoreElement = document.getElementById('score');
+        const coinsElement = document.getElementById('coins');
+        const highScoreElement = document.getElementById('high-score');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreElement = document.getElementById('final-score');
+        const finalCoinsElement = document.getElementById('final-coins');
+        const finalTimeElement = document.getElementById('final-time');
+        const restartBtn = document.getElementById('restart-btn');
+        const modeToggle = document.getElementById('mode-toggle');
+        const biomeIndicator = document.getElementById('biome');
+        const leaderboardList = document.getElementById('leaderboard-list');
+        const playerImg = document.getElementById('player-img');
+
+        // Audio context
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Cargar imágenes
+        let carpinchoImgSrc = '';
+        let caimanImgSrc = '';
+
+        function loadImages() {
+            // Asignar rutas relativas directamente.
+            // Asegúrate de que las imágenes estén en la misma carpeta que el archivo HTML.
+            carpinchoImgSrc = 'personaje.png';
+            caimanImgSrc = 'obstaculo.png';
+
+            playerImg.src = carpinchoImgSrc;
+            // El caimanImgSrc se usará al generar obstáculos.
+        }
+        
+        loadImages();
+
+        // Funciones de sonido
+        function playJumpSound() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 400;
+            oscillator.type = 'sine';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        function playCoinSound() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 800;
+            oscillator.type = 'square';
+            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.15);
+        }
+
+        function playCollisionSound() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 100;
+            oscillator.type = 'sawtooth';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        // Variables del juego
+        let playerY;
+        let playerVelocityY;
+        const gravity = 0.5;
+        const jumpForce = -12;
+
+        let score = 0;
+        let coins = 0;
+        let gameIsOver = false;
+        let gameSpeed = 5;
+        let obstacles = [];
+        let powerups = [];
+        let animationFrameId;
+        let obstacleInterval;
+        let powerupInterval;
+        let startTime;
+        let hasShield = false;
+        let shieldTimeout;
+        let isNightMode = false;
+
+        let highScore = parseInt(localStorage.getItem('carpinchoHighScore')) || 0;
+        let leaderboard = JSON.parse(localStorage.getItem('carpinchoLeaderboard')) || [];
+        highScoreElement.textContent = highScore;
+
+        modeToggle.addEventListener('click', () => {
+            isNightMode = !isNightMode;
+            document.body.classList.toggle('night-mode');
+            gameContainer.classList.toggle('night');
+            
+            if (isNightMode) {
+                modeToggle.textContent = '☀️ Modo Día';
+                biomeIndicator.textContent = '🌙 Noche - corrientes';
+            } else {
+                modeToggle.textContent = '🌙 Modo Noche';
+                biomeIndicator.textContent = '🌅 Día - corrientes';
+            }
+        });
+
+        function startGame() {
+            score = 0;
+            coins = 0;
+            gameIsOver = false;
+            gameSpeed = 5;
+            hasShield = false;
+            startTime = Date.now();
+            
+            scoreElement.textContent = '0';
+            coinsElement.textContent = '0';
+            gameOverScreen.style.display = 'none';
+            
+            playerY = 0;
+            playerVelocityY = 0;
+            player.style.bottom = '50px';
+            player.classList.remove('shield-active');
+
+            obstacles.forEach(obs => obs.element && obs.element.remove());
+            obstacles = [];
+
+            powerups.forEach(pwp => pwp.element && pwp.element.remove());
+            powerups = [];
+
+            if (obstacleInterval) clearInterval(obstacleInterval);
+            if (powerupInterval) clearInterval(powerupInterval);
+            if (shieldTimeout) clearTimeout(shieldTimeout);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+            obstacleInterval = setInterval(generateObstacle, 1800);
+            powerupInterval = setInterval(generatePowerup, 5000);
+            
+            gameLoop();
+        }
+
+        function jump() {
+            if (!gameIsOver && playerY === 0) {
+                playerVelocityY = jumpForce;
+                player.classList.add('jumping');
+                playJumpSound();
+                createParticles(player.offsetLeft + 35, 50, 5);
+                setTimeout(() => player.classList.remove('jumping'), 300);
+            }
+        }
+
+        function gameLoop() {
+            if (gameIsOver) return;
+
+            playerVelocityY += gravity;
+            playerY -= playerVelocityY;
+
+            if (playerY < 0) {
+                playerY = 0;
+                playerVelocityY = 0;
+            }
+
+            const maxHeight = gameContainer.offsetHeight - player.offsetHeight - 50;
+            if (playerY > maxHeight) {
+                playerY = maxHeight;
+                playerVelocityY = 0;
+            }
+
+            player.style.bottom = (50 + playerY) + 'px';
+
+            moveObstacles();
+            movePowerups();
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function generateObstacle() {
+            if (gameIsOver) return;
+
+            const obstacle = document.createElement('div');
+            obstacle.classList.add('obstacle');
+            
+            if (caimanImgSrc) {
+                obstacle.innerHTML = `<div class="cactus"><img src="${caimanImgSrc}" alt="Obstáculo"></div>`;
+            } else {
+                obstacle.innerHTML = '<div class="cactus" style="font-size: 45px; display: flex; align-items: center; justify-content: center;">🐊</div>';
+            }
+            
+            obstacle.style.left = gameContainer.offsetWidth + 'px';
+            gameContainer.appendChild(obstacle);
+            
+            obstacles.push({
+                element: obstacle,
+                passed: false
+            });
+        }
+
+        function generatePowerup() {
+            if (gameIsOver) return;
+
+            const powerup = document.createElement('div');
+            powerup.classList.add('powerup');
+            
+            const type = Math.random() > 0.5 ? 'shield' : 'coin';
+            powerup.classList.add('powerup-' + type);
+            powerup.dataset.type = type;
+            
+            powerup.style.left = gameContainer.offsetWidth + 'px';
+            gameContainer.appendChild(powerup);
+            
+            powerups.push({
+                element: powerup,
+                type: type,
+                collected: false
+            });
+        }
+
+        function checkCollision(element1, element2) {
+            const rect1 = element1.getBoundingClientRect();
+            const rect2 = element2.getBoundingClientRect();
+            const margin = 10;
+
+            return !(rect1.right - margin < rect2.left || 
+                    rect1.left + margin > rect2.right || 
+                    rect1.bottom - margin < rect2.top || 
+                    rect1.top + margin > rect2.bottom);
+        }
+
+        function createParticles(x, y, count) {
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                particle.style.left = x + 'px';
+                particle.style.bottom = y + 'px';
+                gameContainer.appendChild(particle);
+
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 3 + 2;
+                const vx = Math.cos(angle) * speed;
+                const vy = Math.sin(angle) * speed;
+
+                let px = x;
+                let py = y;
+                let opacity = 1;
+
+                function animateParticle() {
+                    px += vx;
+                    py += vy;
+                    opacity -= 0.02;
+
+                    particle.style.left = px + 'px';
+                    particle.style.bottom = py + 'px';
+                    particle.style.opacity = opacity;
+
+                    if (opacity > 0) {
+                        requestAnimationFrame(animateParticle);
+                    } else {
+                        particle.remove();
+                    }
+                }
+                animateParticle();
+            }
+        }
+
+        function moveObstacles() {
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                const obstacle = obs.element;
+                
+                let obstacleLeft = parseFloat(obstacle.style.left);
+                obstacleLeft -= gameSpeed;
+                obstacle.style.left = obstacleLeft + 'px';
+
+                if (checkCollision(player, obstacle)) {
+                    if (hasShield) {
+                        hasShield = false;
+                        player.classList.remove('shield-active');
+                        obstacle.remove();
+                        obstacles.splice(i, 1);
+                        createParticles(obstacleLeft, 50, 10);
+                        continue;
+                    } else {
+                        gameOver();
+                        return;
+                    }
+                }
+
+                const playerLeft = player.offsetLeft;
+                if (!obs.passed && obstacleLeft + 65 < playerLeft) {
+                    obs.passed = true;
+                    score += 10;
+                    scoreElement.textContent = score;
+                    
+                    if (score % 50 === 0 && gameSpeed < 10) {
+                        gameSpeed += 0.5;
+                    }
+                }
+
+                if (obstacleLeft < -65) {
+                    obstacle.remove();
+                    obstacles.splice(i, 1);
+                }
+            }
+        }
+
+        function movePowerups() {
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                const pwp = powerups[i];
+                const powerup = pwp.element;
+                
+                let powerupLeft = parseFloat(powerup.style.left);
+                powerupLeft -= gameSpeed;
+                powerup.style.left = powerupLeft + 'px';
+
+                if (!pwp.collected && checkCollision(player, powerup)) {
+                    pwp.collected = true;
+                    
+                    if (pwp.type === 'shield') {
+                        hasShield = true;
+                        player.classList.add('shield-active');
+                        if (shieldTimeout) clearTimeout(shieldTimeout);
+                        shieldTimeout = setTimeout(() => {
+                            hasShield = false;
+                            player.classList.remove('shield-active');
+                        }, 5000);
+                    } else if (pwp.type === 'coin') {
+                        coins += 5;
+                        coinsElement.textContent = coins;
+                        playCoinSound();
+                    }
+                    
+                    createParticles(powerupLeft, 150, 8);
+                    powerup.remove();
+                    powerups.splice(i, 1);
+                    continue;
+                }
+
+                if (powerupLeft < -35) {
+                    powerup.remove();
+                    powerups.splice(i, 1);
+                }
+            }
+        }
+
+        function gameOver() {
+            gameIsOver = true;
+            cancelAnimationFrame(animationFrameId);
+            clearInterval(obstacleInterval);
+            clearInterval(powerupInterval);
+            playCollisionSound();
+            
+            const playTime = Math.floor((Date.now() - startTime) / 1000);
+            
+            finalScoreElement.textContent = score;
+            finalCoinsElement.textContent = coins;
+            finalTimeElement.textContent = playTime + 's';
+            
+            if (score > highScore) {
+                highScore = score;
+                highScoreElement.textContent = highScore;
+                localStorage.setItem('carpinchoHighScore', highScore);
+            }
+            
+            const entry = {
+                score: score,
+                coins: coins,
+                time: playTime,
+                date: new Date().toLocaleDateString()
+            };
+            
+            leaderboard.push(entry);
+            leaderboard.sort((a, b) => b.score - a.score);
+            leaderboard = leaderboard.slice(0, 5);
+            localStorage.setItem('carpinchoLeaderboard', JSON.stringify(leaderboard));
+            
+            displayLeaderboard(score);
+            
+            obstacles.forEach(obs => obs.element && obs.element.remove());
+            obstacles = [];
+            
+            powerups.forEach(pwp => pwp.element && pwp.element.remove());
+            powerups = [];
+            
+            gameOverScreen.style.display = 'block';
+        }
+
+        function displayLeaderboard(currentScore) {
+            leaderboardList.innerHTML = '';
+            leaderboard.forEach((entry, index) => {
+                const div = document.createElement('div');
+                div.classList.add('leaderboard-entry');
+                if (entry.score === currentScore && index === leaderboard.findIndex(e => e.score === currentScore)) {
+                    div.classList.add('highlight');
+                }
+                div.innerHTML = `
+                    <span>${index + 1}. ${entry.score} pts (${entry.coins} 🪙)</span>
+                    <span>${entry.date}</span>
+                `;
+                leaderboardList.appendChild(div);
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                jump();
+            }
+        });
+
+        document.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            jump();
+        });
+
+        restartBtn.addEventListener('click', startGame);
+
+        startGame();
+    </script>
+</body>
+</html>
