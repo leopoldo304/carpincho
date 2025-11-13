@@ -32,54 +32,66 @@
         }
 
         .header {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 20px 30px;
-            margin-bottom: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.3);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 1000;
         }
 
         .stats {
+            position: fixed;
+            top: 60px;
+            left: 20px;
             display: flex;
-            gap: 30px;
+            gap: 25px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .stat-item {
-            text-align: center;
-            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .stat-label {
             font-size: 12px;
-            opacity: 0.8;
+            color: #666;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            margin-top: 5px;
+            font-size: 24px;
+            font-weight: 900;
+            color: #2c3e50;
         }
 
         .mode-toggle {
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.2);
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
             border: none;
-            border-radius: 10px;
-            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
+            z-index: 1000;
+            font-size: 18px;
         }
 
         .mode-toggle:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.05);
+            background: rgba(255, 255, 255, 1);
         }
 
         /* Modificado: hacer que el "canvas" (#game-container) ocupe toda la pantalla */
@@ -121,10 +133,30 @@
             height: 60px;
             z-index: 5;
             transition: transform 0.1s;
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.25));
+        }
+
+        #player::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 8px;
+            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0) 70%);
+            border-radius: 50%;
+            filter: blur(4px);
         }
 
         #player.jumping {
             transform: rotate(-10deg) translateY(-5px);
+            filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.3));
+        }
+
+        #player.jumping::after {
+            opacity: 0.5;
+            transform: translateX(-50%) scaleX(0.7);
         }
 
         .carpincho {
@@ -138,6 +170,7 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
         }
 
         .obstacle {
@@ -146,6 +179,20 @@
             width: 65px;
             height: 50px;
             z-index: 4;
+            filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.25));
+        }
+
+        .obstacle::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            height: 6px;
+            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0) 70%);
+            border-radius: 50%;
+            filter: blur(3px);
         }
 
         .cactus {
@@ -159,6 +206,7 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
+            filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.2));
         }
 
         .powerup {
@@ -168,6 +216,20 @@
             height: 35px;
             z-index: 4;
             animation: float 2s ease-in-out infinite;
+            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.2));
+        }
+
+        .powerup::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70%;
+            height: 4px;
+            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 70%);
+            border-radius: 50%;
+            filter: blur(2px);
         }
 
         @keyframes float {
@@ -179,7 +241,7 @@
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             border-radius: 50%;
             border: 3px solid #fff;
-            box-shadow: 0 0 20px rgba(79, 172, 254, 0.6);
+            box-shadow: 0 0 20px rgba(79, 172, 254, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.5);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -194,7 +256,7 @@
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             border-radius: 50%;
             border: 3px solid #fff;
-            box-shadow: 0 0 20px rgba(245, 87, 108, 0.6);
+            box-shadow: 0 0 20px rgba(245, 87, 108, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.5);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -213,10 +275,11 @@
             border-radius: 50%;
             pointer-events: none;
             z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .shield-active {
-            box-shadow: 0 0 30px rgba(79, 172, 254, 0.8);
+            box-shadow: 0 0 30px rgba(79, 172, 254, 0.8), 0 0 50px rgba(79, 172, 254, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.6);
             animation: pulse 0.5s infinite;
         }
 
@@ -244,6 +307,18 @@
             color: #e74c3c;
             margin-bottom: 20px;
             font-size: 36px;
+        }
+
+        .humor-message {
+            font-size: 16px;
+            color: #7f8c8d;
+            font-style: italic;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid #e74c3c;
+            border-radius: 5px;
+            line-height: 1.5;
         }
 
         .final-stats {
@@ -373,6 +448,7 @@
             
             <div id="game-over">
                 <h2>¡Juego Terminado!</h2>
+                <div class="humor-message" id="humor-message">¡Vaya, parece que has sido superado por un obstáculo! Pero no te preocupes, ¡siempre hay una segunda oportunidad!</div>
                 <div class="final-stats">
                     <div class="final-stat">
                         <div class="final-stat-label">Puntos</div>
@@ -699,8 +775,9 @@
                     score += 10;
                     scoreElement.textContent = score;
                     
-                    if (score % 50 === 0 && gameSpeed < 10) {
-                        gameSpeed += 0.5;
+                    // Aumentar velocidad cada 100 puntos
+                    if (score % 100 === 0 && gameSpeed < 12) {
+                        gameSpeed += 1;
                     }
                 }
 
@@ -750,6 +827,21 @@
             }
         }
 
+        const humorMessages = [
+            '🐾 "Capibara se escondió. Dice que no te conoce."',
+            '🐾 "Tu capibara pidió vacaciones después de esto."',
+            '🐾 "¡Hasta una tortuga con jetpack lo habría hecho mejor!"',
+            '🐾 "Capibara está practicando yoga para superar el trauma."',
+            '🐾 "El capibara se fue a llorar al río."',
+            '🐾 "Capibara solicitó un cambio de equipo."',
+            '🐾 "El capibara se está cuestionando sus decisiones de vida."',
+            '🐾 "Capibara necesita terapia después de esto."'
+        ];
+
+        function getRandomHumorMessage() {
+            return humorMessages[Math.floor(Math.random() * humorMessages.length)];
+        }
+
         function gameOver() {
             gameIsOver = true;
             cancelAnimationFrame(animationFrameId);
@@ -762,6 +854,9 @@
             finalScoreElement.textContent = score;
             finalCoinsElement.textContent = coins;
             finalTimeElement.textContent = playTime + 's';
+            
+            // Mostrar mensaje de humor
+            document.getElementById('humor-message').textContent = getRandomHumorMessage();
             
             if (score > highScore) {
                 highScore = score;
