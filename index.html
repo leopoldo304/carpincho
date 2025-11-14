@@ -2,13 +2,14 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <!-- Meta responsive (verificado / añadido) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carpincho Runner Pro</title>
     <link rel="stylesheet" href="carpi.css">
 </head>
 <body>
     <div class="game-wrapper">
-        <div class="header">
+        <header class="header">
             <div class="stats">
                 <div class="stat-row">
                     <div class="stat-item">
@@ -24,24 +25,27 @@
                         <div class="stat-value" id="high-score">0</div>
                     </div>
                 </div>
-                <!-- Imagen solicitada debajo del contenedor de puntuación -->
+                <!-- Imagen debajo del contenedor de puntuación -->
                 <img id="meme-img" src="carpincho.jpeg" alt="Carpincho meme">
             </div>
-             <button class="mode-toggle" id="mode-toggle">🌙 Modo Noche corrientes</button>
-         </div>
 
-        <div id="game-container">
+            <button class="mode-toggle" id="mode-toggle">🌙 Modo Noche corrientes</button>
+        </header>
+
+        <main id="game-container">
             <div class="biome-indicator" id="biome">🌅 Día - corrientes</div>
+
             <div id="player">
                 <div class="carpincho">
                     <img id="player-img" src="" alt="Carpincho">
                 </div>
             </div>
-            <div class="ground"></div>
-            
-            <div id="game-over">
+
+            <div class="ground" aria-hidden="true"></div>
+
+            <div id="game-over" role="dialog" aria-hidden="true">
                 <h2>¡Juego Terminado!</h2>
-                <div class="humor-message" id="humor-message">¡Vaya, parece que has sido superado por un obstáculo! Pero no te preocupes, ¡siempre hay una segunda oportunidad!</div>
+                <div class="humor-message" id="humor-message">¡Vaya, parece que has sido superado por un obstáculo!</div>
                 <div class="final-stats">
                     <div class="final-stat">
                         <div class="final-stat-label">Puntos</div>
@@ -62,7 +66,7 @@
                 </div>
                 <button id="restart-btn">Jugar de nuevo</button>
             </div>
-        </div>
+        </main>
 
         <div class="instructions">
             Presiona ESPACIO o toca la pantalla para saltar | Recolecta ⭐ y 🛡️
